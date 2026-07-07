@@ -1,0 +1,21 @@
+2026-07-07 17:05:54,443 p=12128 u=bashtevich. n=ansible INFO| linux-container-2 | SUCCESS => {
+    "changed": false,
+    "ping": "pong"
+}
+2026-07-07 17:05:54,443 p=12128 u=bashtevich. n=ansible INFO| linux-container-3 | SUCCESS => {
+    "changed": false,
+    "ping": "pong"
+}
+2026-07-07 17:05:54,443 p=12128 u=bashtevich. n=ansible INFO| linux-container-1 | SUCCESS => {
+    "changed": false,
+    "ping": "pong"
+}
+2026-07-07 17:06:04,225 p=12305 u=bashtevich. n=ansible INFO| linux-container-3 | CHANGED | rc=0 >>
+linux-3
+
+2026-07-07 17:06:04,225 p=12305 u=bashtevich. n=ansible INFO| linux-container-2 | CHANGED | rc=0 >>
+linux-2
+
+2026-07-07 17:06:04,225 p=12305 u=bashtevich. n=ansible INFO| linux-container-1 | CHANGED | rc=0 >>
+linux-1
+

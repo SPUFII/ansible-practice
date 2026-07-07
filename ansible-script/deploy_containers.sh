@@ -7,7 +7,7 @@ set -e
 
 # Цвета для вывода
 RED='\033[0;31m'
-GREEN='\033[0;32m'
+GREEN='\033[0;32m'pwd
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
@@ -64,11 +64,7 @@ if ! command -v docker &> /dev/null; then
     exit 1
 fi
 
-# Проверка наличия Docker Compose
-if ! command -v docker-compose &> /dev/null; then
-    log_error "Docker Compose не установлен. Установите Docker Compose и попробуйте снова."
-    exit 1
-fi
+
 
 # Проверка наличия Dockerfile
 if [ ! -f "Dockerfile" ]; then
@@ -78,7 +74,7 @@ fi
 
 # Сборка базового образа
 log_info "Сборка базового образа Linux..."
-docker-compose build
+docker build -t linux-full:latest .
 
 log_success "Базовый образ собран успешно"
 
