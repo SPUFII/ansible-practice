@@ -1,0 +1,140 @@
+---
+- name: Configure webserver
+  hosts: webservers 
+  become: true 
+  gather_facts: true
+
+  vars:
+    app_user: appuser 
+    app_directory: /var/www/myapp
+    domain_name: myapp.local
+
+    nginx_config_src: myapp.local.conf.j2
+    nginx_config_dest: "/etc/nginx/sites-available/{{ domain_name }}"
+    nginx_config_link: "/etc/nginx/sites-enabled/{{ domain_name }}"
+
+  tasks:
+    - name: Update apt cache 
+      ansible.builtin.apt:
+        update_cache: true 
+        cache_valid_time: 3600
+    
+    - name: install packages 
+      ansible.builtin.apt:
+        name: 
+          - nginx
+          - ufw
+          - python3-pip
+        state: present 
+
+    - name: create user
+      ansible.builtin.user: 
+        name: "{{ app_user }}"
+        shell: /bin/bash
+        create_home: true 
+        state: present 
+
+    - name: create app dir 
+      ansible.builtin.file:
+        path: "{{ app_directory }}"
+        state: directory 
+        owner: "{{ app_user }}"
+        group: "{{ app_user }}"
+        mode: "0755"
+
+    - name: create test index.html
+      ansible.builtin.file:
+        path: "{{ app_directory }}"
+        state: directory 
+        owner: "{{ app_user }}"
+        group: "{{ app_user }}"
+        mode: "0644"
+        content: |
+          <!doctype html>
+
+          <html>
+
+            <head>
+
+              <title>{{ domain_name }}</title>
+
+            </head>
+
+            <body>
+
+              <h1>Салам тебе от {{ domain_name }}</h1>
+
+              <p> Первый плейбучек полетел сюда! </p>
+
+            </body>
+
+          </html>
+
+      notify: Reload nginx
+
+    - name: deploy nginx config
+      ansible.builtin.template: 
+        src: templates/myapp.nginx.conf.j2
+        dest: "{{ nginx_site_available }}"
+        owner: root
+        group: root
+        mode: "0644"
+      notify: Reload nginx 
+
+    - name: enable nginx virtual host 
+      ansible.builtin.file:
+        src: "{{ nginx_site_available }}"
+        dest: "{{ nginx_site_enabled }}"
+        state: link 
+        force: true 
+      notify: Reload nginx 
+
+    - name: disable default virt host 
+      ansible.builtin.file:
+        src: /etc/nginx/sites_enabled/default
+        state: absent 
+      notify: Reload nginx
+
+    - name: Validate nginx configurartion
+      ansible.builtin.command: nginx -T 
+      changed_when: false 
+
+    - name: allow ssh through ufw 
+      community.general.ufw: 
+        rule: allow
+        port: "22"
+        proto: tcp
+
+    - name: allow http through ufw 
+      community.general.ufw: 
+        rule: allow
+        port: "80"
+        proto: tcp
+
+    - name: enable ufw 
+      community.general.ufw: 
+      state: enabled 
+      policy: deny 
+
+    - name: ensure nginx is started and enabled 
+      ansible.builtin.service:
+        name: nginx
+        state: started
+        enabled: true 
+
+    - name: check what nginx respond locally 
+      ansible.builtin.uri:
+        url: "https://127.0.0.1"
+        status_code: 200 
+      register: nginx_check
+
+    - name: show nginx response status 
+      ansible.builtin.debug:
+        msg: "Nginx вернул вот такую маляву {{ nginx_check.status }}"
+
+  handlers: 
+    - name: Reload nginx
+      ansible.builtin.service:
+        name: nginx 
+        state: reloaded
+        
