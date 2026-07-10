@@ -1,0 +1,18 @@
+[Unit]
+Description=Flask application {{ app_name }}
+After=network.target
+
+[Service]
+Type=simple
+User={{ app_user }}
+Group={{ app_user }}
+WorkingDirectory={{ app_directory }}
+ExecStart={{ app_venv }}/bin/python {{ app_file }}
+Restart=always
+RestartSec=5
+
+StandardOutput=append:{{ app_log_directory }}/systemd.log
+StandardError=append:{{ app_log_directory }}/systemd-error.log
+
+[Install]
+WantedBy=multi-user.target

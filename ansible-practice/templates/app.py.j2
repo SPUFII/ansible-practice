@@ -1,0 +1,27 @@
+from flask import Flask
+import logging
+import os
+
+app = Flask(__name__)
+
+log_directory = "{{ app_log_directory }}"
+log_file = os.path.join(log_directory, "app.log")
+
+logging.basicConfig(
+    filename=log_file,
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(message)s"
+)
+
+@app.route("/")
+def index():
+    logging.info("Request received on /")
+    return "Hello from {{ app_name }} version {{ app_version }}\n"
+
+@app.route("/health")
+def health():
+    logging.info("Health check requested")
+    return "OK\n"
+
+if __name__ == "__main__":
+    app.run(host="127.0.0.1", port={{ app_port }})
