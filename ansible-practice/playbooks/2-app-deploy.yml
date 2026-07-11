@@ -1,0 +1,161 @@
+---
+- name: Deploy Flask app
+  hosts: appservers
+  become: true 
+  gather_facts: true
+
+  vars:
+    app_name: myapp
+    app_user: appuser 
+    app_directory: /var/www/myapp
+    app_log_directory: /var/log/myapp
+    app_version: "1.0"
+    app_port: 5000
+    domain_name: myapp.local
+
+    app_venv: "{{ app_directory }}/venv"
+    app_file: "{{ app_directory }}/app.py"
+    requirements_file: "{{ app_directory }}/requirements.txt"
+
+    app_service_path: "/etc/systemd/system/{{ app_name }}.service"
+    nginx_config_path: "/etc/nginx/sites-available/{{ app_name }}"
+    nginx_config_link: "/etc/nginx/sites-enabled/{{ app_name }}"
+
+  tasks:
+    - name: install python packages required for flask 
+      ansible.builtin.apt:
+        name:
+          - python3-pip
+          - python3-venv
+          - nginx
+          - acl
+        state: present
+        update_cache: true 
+
+    - name: Ensure app user exists
+      ansible.builtin.user:
+        name: "{{ app_user }}"
+        shell: /bin/bash
+        create_home: true 
+        state: present
+
+    - name: create app dir 
+      ansible.builtin.file:
+        path: "{{ app_directory }}"
+        state: directory
+        owner: "{{ app_user }}"
+        group: "{{ app_user }}"
+        mode: "0755"
+      notify: Restart myapp
+
+    - name: create log dir 
+      ansible.builtin.file:
+        path: "{{ app_log_directory }}"
+        state: directory
+        owner: "{{ app_user }}"
+        group: "{{ app_user }}"
+        mode: "0755"
+
+    - name: deploy flask app 
+      ansible.builtin.template:
+        src: ../templates/app.py.j2
+        dest: "{{ app_file }}"
+        owner: "{{ app_user }}"
+        group: "{{ app_user }}"
+        mode: "0644"
+      notify: Restart myapp
+
+    - name: deploy requirements_file
+      ansible.builtin.template:
+        src: ../templates/requirements.txt.j2
+        dest: "{{ requirements_file }}"
+        owner: "{{ app_user }}"
+        group: "{{ app_user }}"
+        mode: "0644"
+      notify: Restart myapp
+
+    - name: install flask dependencies into venv 
+      ansible.builtin.pip:
+        requirements: "{{ requirements_file }}"
+        virtualenv: "{{ app_venv }}"
+        virtualenv_command: python3 -m venv
+      become_user: "{{ app_user }}"
+      notify: Restart myapp
+
+    - name: deploy system service for flask app
+      ansible.builtin.template:
+        src: ../templates/myapp.service.j2 
+        dest: "{{ app_service_path }}"
+        owner: root
+        group: root
+        mode: "0644"
+      notify:
+        - Restart myapp
+        - Reload systemd
+
+    - name: deploy nginx revers proxy 
+      ansible.builtin.template:
+        src: ../templates/myapp-flask-nginx.conf.j2 
+        dest: "{{ nginx_config_path }}"
+        owner: root
+        group: root
+        mode: "0644"
+      notify: Reload nginx 
+
+    - name: enable nginx site 
+      ansible.builtin.file:
+        src: "{{ nginx_config_path }}"
+        dest: "{{ nginx_config_link }}"
+        state: link 
+        force: true 
+      notify: Reload nginx 
+
+    - name: disable defgault nginx site 
+      ansible.builtin.file:
+        path: /etc/nginx/sites-enabled/default
+        state: absent
+      notify: Reload nginx
+
+    - name: valifate ngixn conf 
+      ansible.builtin.command: nginx -t
+      changed_when: false 
+
+    - name: enable and start flas app service
+      ansible.builtin.systemd_service:
+        name: "{{ app_name }}"
+        state: started
+        enabled: true
+        daemon_reload: true
+    
+    - name: enable and start nginx service
+      ansible.builtin.service:
+        name: nginx
+        state: started
+        enabled: true
+
+    - name: check app through nginx 
+      ansible.builtin.uri:
+        url: "http://127.0.0.1/"
+        status_code: 200
+        return_content: true 
+      register: app_check
+
+    - name: show app response 
+      ansible.builtin.debug:
+        msg: "{{ app_check.content }}"
+
+  handlers:
+    - name: Reload systemd 
+      ansible.builtin.systemd_service:
+        daemon_reload: true 
+
+    - name: Restart myapp 
+      ansible.builtin.systemd_service:
+        name: "{{ app_name }}"
+        state: restarted
+        daemon_reload: true
+
+    - name: Reload nginx
+      ansible.builtin.service: 
+        name: nginx 
+        state: reloaded 
