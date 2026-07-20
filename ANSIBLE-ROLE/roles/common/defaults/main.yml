@@ -1,0 +1,41 @@
+---
+common_packages:
+  - curl
+  - wget
+  - vim
+  - htop
+  - git
+  - ufw
+  - python3-pip
+  - ntp
+  - unattended-upgrades
+
+deploy_group: deploy 
+deploy_user: deploy 
+
+deploy_user_groups:
+  - deploy
+  - sudo 
+
+deploy_user_shell: /bin/bash 
+deploy_user_create_home: true 
+
+deploy_user_ssh_public_key: ""
+
+ssh_port: 22
+ssh_disable_root: true
+ssh_password_auth: false 
+
+timezone: "Europe/Moscow"
+
+enable_firewall: true 
+ufw_default_incoming: deny 
+ufw_default_outgoing: allow 
+
+ufw_allowed_ports:
+  - "22/tcp"
+  - "80/tcp"
+
+unattended_reboot: "false"
+
+unattended_reboot_time: "03:00"

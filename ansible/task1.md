@@ -109,4 +109,4 @@ ansible-practice/
 - `curl http://server_ip/` - отдает приложение
 - `curl http://server_ip:9100/metrics` - отдает метрики
 - `systemctl status nginx` - nginx активен
-- `systemctl status node_exporter` - node_exporter активен
+- `systemctl status prometheus_node_exporter` - node_exporter активен

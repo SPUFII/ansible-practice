@@ -6,105 +6,20 @@
 
   vars:
     app_user: appuser
-    node_exporter_version: "1.7.0"
-    node_exporter_user: node_exporter
-    node_exporter_group: node_exporter
     node_exporter_port: 9100
-
-    node_exporter_install_dir: /opt/node_exporter
-    node_exporter_tmp_dir: /tmp
+    node_exporter_service: prometheus-node-exporter
 
     prometheus_server_ip: "192.168.1.0"
 
-    node_exporter_arch_map:
-      x86_64: amd64 
-      aarch64: arm64 
-      armv71: armv7
-
-    node_exporter_arch: "{{ node_exporter_arch_map[ansible_facts.architecture] | default(ansible_facts.architecture) }}"
-
-
-    node_exporter_archive: "node_exporter-{{ node_exporter_version }}.linux-{{ node_exporter_arch }}.tar.gz"
-
-    node_exporter_download_url: "https://github.com/prometheus/node_exporter/releases/download/v{{ node_exporter_version }}/{{ node_exporter_archive }}"
-
-    node_exporter_extract_dir: "{{ node_exporter_tmp_dir }}/node_exporter-{{ node_exporter_version }}.linux-{{ node_exporter_arch }}" 
-
   tasks: 
-    - name: Install packages requuired for downloading and extracting archive
+    - name: Install node exporter and firewall packages
       ansible.builtin.apt:
         name:
-          - curl
-          - tar
-          - gzip 
+          - prometheus-node-exporter
           - ufw
         state: present
-
         update_cache: true
-
-    - name: Create node_exporter system group  
-      ansible.builtin.group:
-        name: "{{ node_exporter_group }}"
-        system: true 
-        state: present
-
-    - name: Create node_exporter system user  
-      ansible.builtin.user:
-        name: "{{ node_exporter_user }}"
-        group: "{{ node_exporter_group }}"
-        shell: /usr/sbin/nologin
-        system: true 
-        create_home: false
-        state: present
-
-    - name: create node expportet inst dir 
-      ansible.builtin.file:
-        path: "{{ node_exporter_install_dir }}"
-        state: directory
-        owner: root
-        group: root
-        mode: "0755"
-    
-    - name: Check node exporter archive
-      ansible.builtin.stat:
-        path: "{{ node_exporter_tmp_dir }}/{{ node_exporter_archive }}"
-      register: node_exporter_archive_stat
-
-    - name: Download node exporter archive
-      ansible.builtin.get_url:
-        url: "{{ node_exporter_download_url }}"
-        dest: "{{ node_exporter_tmp_dir }}/{{ node_exporter_archive }}"
-        mode: "0644"
-      when: not node_exporter_archive_stat.stat.exists
-
-    - name: extarct ne archive
-      ansible.builtin.unarchive:
-        src: "{{ node_exporter_tmp_dir }}/{{ node_exporter_archive }}"
-        dest: "{{ node_exporter_tmp_dir }}"
-        remote_src: true
-
-      notify: Restart node_exporter
-
-    - name: install node exp binary 
-      ansible.builtin.copy:
-        src: "{{ node_exporter_extract_dir }}/node_exporter"
-        dest: "{{ node_exporter_install_dir }}/node_exporter"
-        owner: root
-        group: root
-        mode: "0755"
-        remote_src: true 
-      notify: Restart node_exporter
-
-    - name: Deploy NE systemd service 
-      ansible.builtin.template:
-        src: ../templates/node_exporter.service.j2 
-        dest: /etc/systemd/system/node_exporter.service
-        owner: root
-        group: root
-        mode: "0644"
-      notify:
-        - Reload system
-        - Restart node_exporter
+        lock_timeout: 60
 
     - name: allow prometheus server to scrape NE port 
       community.general.ufw:
@@ -118,7 +33,7 @@
 
     - name: enable and start NE
       ansible.builtin.systemd_service:
-        name: node_exporter 
+        name: "{{ node_exporter_service }}" 
         state: started
         enabled: true
         daemon_reload: true
@@ -145,11 +60,7 @@
 
 
   handlers:
-    - name: Reload system 
-      ansible.builtin.systemd_service:
-        daemon_reload: true 
-
     - name: Restart node_exporter 
       ansible.builtin.systemd_service:
-        name: node_exporter
+        name: "{{ node_exporter_service }}"
         state: restarted

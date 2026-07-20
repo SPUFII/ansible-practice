@@ -1,0 +1,11 @@
+# SSh demon configuration
+
+Port {{ ssh_port }}
+
+PermitRootLogin {{ "no" if ssh_disable_root else "yes" }}
+
+PasswordAuthentication {{ "yes" if ssh_password_auth else "no"  }}
+
+PubkeyAuthentication yes 
+
+AuthorizedKeysFile .ssh/authorized_keys
