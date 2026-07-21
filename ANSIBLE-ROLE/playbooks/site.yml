@@ -1,8 +1,18 @@
 ---
-- name: COnfigure all servers 
-  hosts: all
+- name: Configure all servers 
+  hosts: linux_containers
   become: true
   gather_facts: true
 
   roles:
     - role: common
+
+- name: Configure PostgreSQL servers 
+  hosts: databases
+  become: true
+  gather_facts: true
+
+  roles:
+    - role: postgresql
+      tags: 
+        - postgresql

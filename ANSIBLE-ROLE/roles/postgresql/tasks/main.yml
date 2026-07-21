@@ -1,0 +1,30 @@
+---
+- name: Import PostgreSQL variable validation
+  ansible.builtin.import_tasks: validate.yml
+  tags:
+    - always
+    
+- name: Import installation tasks
+  ansible.builtin.import_tasks: install.yml
+  tags:
+    - install
+
+- name: Import configuration tasks
+  ansible.builtin.import_tasks: config.yml
+  tags:
+    - config
+
+- name: Apply PostgreSQL config handlers
+  ansible.builtin.meta: flush_handlers
+  tags: 
+    - config
+
+- name: Import Postgresql Tasks
+  ansible.builtin.import_tasks: users.yml
+  tags:
+    - users
+
+- name: Import Postgresql databases tasks
+  ansible.builtin.import_tasks: database.yml
+  tags:
+    - database

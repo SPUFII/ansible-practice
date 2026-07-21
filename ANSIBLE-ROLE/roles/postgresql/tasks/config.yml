@@ -1,0 +1,28 @@
+---
+- name: Ensure PostgreSQL managed configuration directory exists 
+  ansible.builtin.file:
+    path: "/etc/postgresql/{{ postgresql_version }}/main/conf.d"
+    state: directory
+    owner: postgres
+    group: postgres
+    mode: "0755"
+
+- name: Deploy Ansible-managed PostgreSQL configuration
+  ansible.builtin.template:
+    src: 99-ansible.conf.j2
+    dest: "/etc/postgresql/{{ postgresql_version }}/main/conf.d/99-ansible.conf"
+    owner: postgres
+    group: postgres
+    mode: "0644"
+    backup: true
+  notify: Restart PostgreSQL
+
+- name: Deploy pg_hba configuration
+  ansible.builtin.template:
+    src: pg_hba.conf.j2
+    dest: "/etc/postgresql/{{ postgresql_version }}/main/pg_hba.conf"
+    owner: postgres
+    group: postgres
+    mode: "0640"
+    backup: true
+  notify: Reload PostgreSQL

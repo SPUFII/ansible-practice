@@ -1,0 +1,16 @@
+---
+- name: Validate PostgreSQL role variables
+  ansible.builtin.assert:
+    that:
+      - postgresql_version | length > 0
+      - postgresql_database | length > 0
+      - postgresql_user | length > 0
+      - postgresql_password is defined
+      - postgresql_password | length >= 12
+      - postgresql_port | int > 0
+      - postgresql_port | int <= 65535
+
+    fail_msg: >-
+      PostgreSQL role variables are invalid.
+      Check version, database, user, password and port.
+    success_msg: PostgreSQL role variables are valid

@@ -1,0 +1,28 @@
+# This file is managed by Ansible.
+# Manual changes may be overwritten.
+
+# Connections
+listen_addresses = '{{ postgresql_listen_addresses }}'
+port = {{ postgresql_port }}
+max_connections = {{ postgresql_max_connections }}
+
+# Authentication
+password_encryption = '{{ postgresql_password_encryption }}'
+
+# Memory
+shared_buffers = '{{ postgresql_shared_buffers }}'
+work_mem = '{{ postgresql_work_mem }}'
+maintenance_work_mem = '{{ postgresql_maintenance_work_mem }}'
+effective_cache_size = '{{ postgresql_effective_cache_size }}'
+
+# Write-ahead log
+wal_level = replica
+
+# Logging
+log_min_duration_statement = {{ postgresql_log_min_duration_statement }}
+log_connections = {{ postgresql_log_connections | ternary('on', 'off') }}
+log_disconnections = {{ postgresql_log_disconnections | ternary('on', 'off') }}
+
+# Timezone
+timezone = 'UTC'
+log_timezone = 'UTC'

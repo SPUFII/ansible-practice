@@ -1,0 +1,20 @@
+# This file is managed by Ansible.
+# Manual changes may be overwritten.
+
+# TYPE  DATABASE        USER            ADDRESS                 METHOD
+
+# Unix socket connection for PostgreSQL administrator
+local   all             postgres                                peer
+
+# Unix socket connections for local operating-system users
+local   all             all                                     peer
+
+# TCP connections from localhost over IPv4
+host    all             all             127.0.0.1/32            scram-sha-256
+
+# TCP connections from localhost over IPv6
+host    all             all             ::1/128                 scram-sha-256
+
+{% for rule in postgresql_hba_rules %}
+{{ rule.type }}    {{ rule.database }}    {{ rule.user }}{% if rule.address is defined %}    {{ rule.address }}{% endif %}    {{ rule.method }}
+{% endfor %}

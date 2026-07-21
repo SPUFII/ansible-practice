@@ -1,0 +1,10 @@
+---
+- name: Create PostgreSQL application role 
+  community.general.postgresql_user:
+    name: "{{ postgresql_user }}"
+    password: "{{ postgresql_password }}"
+    state: present
+  become: true 
+  become_user: postgres
+  no_log: true
+  

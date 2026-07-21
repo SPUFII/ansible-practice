@@ -1,0 +1,4 @@
+---
+postgresql_database: myapp
+postgresql_user: app_user
+postgresql_password: "ChangeMe-For-Lab-123"

@@ -1,0 +1,9 @@
+---
+- name: Create PostgreSQL application database
+  community.postgresql.postgresql_db:
+    name: "{{ postgresql_database }}"
+    owner: "{{ postgresql_user }}"
+    encoding: UTF8
+    state: present
+  become: true
+  become_user: postgres
